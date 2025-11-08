@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purchase History - EVOSGPT</title>
+  <style>
+    :root {
+      --bg-color: #f5f7fa;
+      --text-color: #333;
+      --primary-color: #00d4ff;
+      --card-bg: #fff;
+      --border-color: #ddd;
+    }
+    [data-theme="dark"] {
+      --bg-color: #101010;
+      --text-color: #f5f5f5;
+      --card-bg: #1f1f1f;
+      --border-color: #333;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    h2 {
+      color: var(--primary-color);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    form {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    select, button {
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+    button {
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover { background: #009ecc; }
+    a.reset-link { color: var(--primary-color); text-decoration: none; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+      text-align: center;
+    }
+    th {
+      background: var(--primary-color);
+      color: white;
+    }
+    tr:nth-child(even) {
+      background: rgba(0, 212, 255, 0.05);
+    }
+
+    .tier-basic { color: #bbb; }
+    .tier-core { color: #00ff99; }
+    .tier-pro { color: #00ffff; }
+    .tier-king { color: gold; }
+
+    .no-history {
+      text-align: center;
+      font-style: italic;
+      margin-top: 15px;
+    }
+
+    .back-link {
+      display: block;
+      margin-top: 20px;
+      text-align: center;
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>💳 Purchase History</h2>
+
+    <!-- Filter Form -->
+    <form method="get">
+      <select name="tier">
+        <option value="">All Tiers</option>
+        <option value="Basic" {% if tier_filter == 'Basic' %}selected{% endif %}>Basic</option>
+        <option value="Core" {% if tier_filter == 'Core' %}selected{% endif %}>Core</option>
+        <option value="Pro" {% if tier_filter == 'Pro' %}selected{% endif %}>Pro</option>
+        <option value="King" {% if tier_filter == 'King' %}selected{% endif %}>King</option>
+      </select>
+
+      <select name="method">
+        <option value="">All Methods</option>
+        <option value="bank" {% if method_filter == 'bank' %}selected{% endif %}>💳 Bank</option>
+        <option value="momo" {% if method_filter == 'momo' %}selected{% endif %}>📱 Mobile Money</option>
+        <option value="crypto" {% if method_filter == 'crypto' %}selected{% endif %}>₿ Crypto</option>
+        <option value="coupon" {% if method_filter == 'coupon' %}selected{% endif %}>🎟 Coupon</option>
+      </select>
+
+      <button type="submit">Filter</button>
+      <a href="/history" class="reset-link">Reset</a>
+    </form>
+
+    {% if history %}
+    <table>
+      <tr>
+        <th>Tier</th>
+        <th>Method</th>
+        <th>Reference</th>
+        <th>Date</th>
+      </tr>
+      {% for item in history %}
+      <tr>
+        <td class="tier-{{ item.tier|lower }}">{{ item.tier }}</td>
+        <td>
+          {% if item.method == 'bank' %}💳 Bank
+          {% elif item.method == 'momo' %}📱 Mobile Money
+          {% elif item.method == 'crypto' %}₿ Crypto
+          {% elif item.method == 'coupon' %}🎟 Coupon
+          {% else %}{{ item.method }}
+          {% endif %}
+        </td>
+        <td>{{ item.reference }}</td>
+        <td>{{ item.timestamp }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="no-history">No purchases found for this filter.</p>
+    {% endif %}
+
+    <a href="/" class="back-link">🔙 Return Home</a>
+  </div>
+
+  <script>
+    // Auto-apply dark mode
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) {
+      document.body.setAttribute("data-theme", savedTheme);
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      document.body.setAttribute("data-theme", "dark");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>👑 Coupon Dashboard - EVOSGPT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      background: #0d0d0d;
+      color: #00ffff;
+      font-family: "Courier New", monospace;
+      padding: 20px;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    h2 {
+      text-align: center;
+      color: gold;
+      margin-bottom: 10px;
+    }
+    h3 {
+      margin-top: 25px;
+      color: #ff00ff;
+    }
+    form {
+      background: #111;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      margin-bottom: 20px;
+    }
+    input, select, button {
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 5px;
+      border: none;
+      font-family: inherit;
+    }
+    input, select {
+      width: calc(100% - 20px);
+      background: #1a1a1a;
+      color: #fff;
+    }
+    button {
+      background: #00ffff;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background: #00cccc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: #111;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #00ffff33;
+      text-align: center;
+    }
+    th {
+      background: #1a1a1a;
+      color: #00ffff;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+    tr:nth-child(even) {
+      background: #181818;
+    }
+    td {
+      color: #ddd;
+    }
+    a {
+      color: #ff00ff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 15px;
+      color: #666;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <h2>👑 Coupon Dashboard</h2>
+  <p style="text-align:center;"><a href="{{ url_for('index') }}">← Back to Home</a></p>
+
+  <h3>Create New Coupon</h3>
+  <form method="POST">
+    <input name="code" placeholder="Coupon Code" required>
+    <select name="tier">
+      <option value="Core">⚛ Core</option>
+      <option value="Pro">⚡ Pro</option>
+      <option value="King">👑 King</option>
+    </select>
+    <button type="submit">Generate</button>
+  </form>
+
+  <h3>All Coupons</h3>
+  <table>
+    <tr>
+      <th>Code</th>
+      <th>Tier</th>
+      <th>Used</th>
+      <th>Action</th>
+    </tr>
+    {% for code, tier, used in coupons %}
+    <tr>
+      <td>{{ code }}</td>
+      <td>{{ tier }}</td>
+      <td>{{ '✅' if used else '❌' }}</td>
+      <td>
+        <a href="{{ url_for('delete_coupon', code=code) }}" onclick="return confirm('Delete this coupon?')">Delete</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <div class="footer">
+    EVOSGPT Admin Panel © {{ year }}
+  </div>
+</body>
+</html>

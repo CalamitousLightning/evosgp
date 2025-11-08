@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>👻 Ghost Logs - EVOSGPT</title>
+  <meta http-equiv="refresh" content="30"> <!-- Auto-refresh every 30s -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      background: #0d0d0d;
+      color: #ff69b4;
+      font-family: "Courier New", monospace;
+      padding: 20px;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    h2 {
+      color: #ff1493;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    p {
+      text-align: center;
+      color: #bbb;
+      margin-bottom: 20px;
+    }
+    .log {
+      background: #1a1a1a;
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+    .activity {
+      color: #ff69b4;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .details {
+      color: #eee;
+      margin-bottom: 5px;
+    }
+    .time {
+      color: #999;
+      font-size: 12px;
+    }
+    .ip {
+      color: cyan;
+      font-size: 12px;
+    }
+    a {
+      color: cyan;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .pagination {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .pagination a {
+      color: #ff69b4;
+      margin: 0 8px;
+      font-weight: bold;
+    }
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 15px;
+      color: #666;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <h2>👻 Ghost Logs (Founder Only)</h2>
+  <p><i>Auto-refreshing every 30 seconds…</i></p>
+
+  {% if logs %}
+    {% for entry in logs %}
+      <div class="log">
+        <div class="activity">[{{ entry.activity }}]</div>
+        <div class="details">{{ entry.details }}</div>
+        <div class="time">🕒 {{ entry.time }}</div>
+        <div class="ip">🌐 {{ entry.ip }} | {{ entry.user_agent }}</div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No ghost logs yet.</p>
+  {% endif %}
+
+  <!-- 🔹 Pagination controls -->
+  <div class="pagination">
+    {% if page > 1 %}
+      <a href="{{ url_for('ghost_logs', page=page-1) }}">⬅ Prev</a>
+    {% endif %}
+    <span>Page {{ page }}</span>
+    {% if has_more %}
+      <a href="{{ url_for('ghost_logs', page=page+1) }}">Next ➡</a>
+    {% endif %}
+  </div>
+
+  <div class="footer">
+    <a href="/">🔙 Back to Home</a> | EVOSGPT © {{ year }}
+  </div>
+</body>
+</html>

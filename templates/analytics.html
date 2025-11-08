@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics - EVOSGPT</title>
+  <style>
+    :root {
+      --bg-color: #f5f7fa;
+      --text-color: #333;
+      --primary-color: #00d4ff;
+      --card-bg: #fff;
+      --border-color: #ddd;
+    }
+    [data-theme="dark"] {
+      --bg-color: #121212;
+      --text-color: #f5f5f5;
+      --primary-color: #00d4ff;
+      --card-bg: #1f1f1f;
+      --border-color: #333;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+    }
+
+    h2 {
+      color: var(--primary-color);
+      margin-bottom: 15px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    ul li {
+      padding: 8px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+    }
+    ul li:last-child { border-bottom: none; }
+
+    a {
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: none;
+      color: var(--primary-color);
+      font-weight: bold;
+    }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h2>📊 Tier Analytics</h2>
+
+  <div class="card">
+    <h3>Message Breakdown</h3>
+    <ul>
+      <li>👤 User Messages: {{ user_count }}</li>
+      <li>⚙️ System Messages: {{ system_count }}</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Recent System Messages</h3>
+    <ul>
+      {% for msg, ts in system_messages %}
+        <li><b>[{{ ts }}]</b> {{ msg }}</li>
+      {% else %}
+        <li>No system messages yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <a href="/">← Back to Chat</a>
+
+  <script>
+    // Auto-apply dark theme if system prefers or user saved preference
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) {
+      document.body.setAttribute("data-theme", savedTheme);
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      document.body.setAttribute("data-theme", "dark");
+    }
+  </script>
+</body>
+</html>

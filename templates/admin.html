@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard - EVOSGPT</title>
+    <style>
+        body { background:#0a0a0a; color:#00ffff; font-family:Arial; padding:20px; }
+        h2 { color:#fff; }
+        table { border-collapse: collapse; width:100%; margin-bottom:20px; }
+        th, td { border:1px solid #00ffff; padding:8px; text-align:left; }
+        th { background:#111; }
+    </style>
+</head>
+<body>
+    <h2>👑 EVOSGPT Admin Dashboard</h2>
+
+    <h3>System Notices</h3>
+    <ul>
+        {% for n in notices %}
+            <li>{{ n[0] }} ({{ n[1] }})</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Tier Usage</h3>
+    <table>
+        <tr><th>Tier</th><th>Count</th></tr>
+        {% for t in tier_usage %}
+            <tr><td>{{ t[0] }}</td><td>{{ t[1] }}</td></tr>
+        {% endfor %}
+    </table>
+
+    <h3>Activity Log</h3>
+    <table>
+        <tr><th>User ID</th><th>Action</th><th>Details</th><th>Time</th></tr>
+        {% for a in activity %}
+            <tr><td>{{ a[0] }}</td><td>{{ a[1] }}</td><td>{{ a[2] }}</td><td>{{ a[3] }}</td></tr>
+        {% endfor %}
+    </table>
+
+    <h3>Coupons</h3>
+    <table>
+        <tr><th>Code</th><th>Tier</th><th>Used</th></tr>
+        {% for c in coupons %}
+            <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td></tr>
+        {% endfor %}
+    </table>
+
+    <a href="/">← Back to Chat</a>
+</body>
+</html>

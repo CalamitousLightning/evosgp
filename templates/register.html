@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - EVOSGPT</title>
+  <style>
+    :root {
+      --bg-color: #f5f7fa;
+      --text-color: #333;
+      --primary-color: #00d4ff;
+      --card-bg: #fff;
+      --border-color: #ccc;
+    }
+    [data-theme="dark"] {
+      --bg-color: #121212;
+      --text-color: #f5f5f5;
+      --primary-color: #00d4ff;
+      --card-bg: #1f1f1f;
+      --border-color: #333;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .form-box {
+      width: 100%;
+      max-width: 400px;
+      padding: 25px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--primary-color);
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-size: 14px;
+    }
+
+    input {
+      background: var(--card-bg);
+      color: var(--text-color);
+    }
+
+    button {
+      background: var(--primary-color);
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #00bde0;
+    }
+
+    p {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 15px;
+    }
+    p a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .msg {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      text-align: center;
+    }
+    .msg.error { background: #ffebee; color: #c62828; }
+    .msg.success { background: #e8f5e9; color: #2e7d32; }
+  </style>
+</head>
+<body>
+
+
+  <div class="form-box">
+    <h2>Create Account</h2>
+    <form method="POST">
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="text" name="email" placeholder="Email or Mobile" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+      <input type="text" name="referral_code" placeholder="Referral Code (optional)">
+      <button type="submit">Register</button>
+    </form>
+  <div>
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul style="color:red; font-weight:bold;">
+      {% for msg in messages %}
+        <li>{{ msg }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+</div>
+    {% if msg %}
+      <div class="msg {{ msg_type }}">{{ msg }}</div>
+    {% endif %}
+
+    <p>Already have an account? <a href="/login">Login here</a></p>
+  </div>
+
+  <script>
+    // Apply saved theme or follow system
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) {
+      document.body.setAttribute("data-theme", savedTheme);
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      document.body.setAttribute("data-theme", "dark");
+    }
+  </script>
+</body>
+</html>

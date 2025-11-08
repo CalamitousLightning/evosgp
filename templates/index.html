@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EVOSGPT</title>
+
+  <!-- ✅ Favicon -->
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/evosgpt-icon.png') }}">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='images/evosgpt-icon.png') }}">
+
+  <!-- ✅ Local Static Files -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/github-dark.min.css') }}">
+  <script src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/highlight.min.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    :root {
+      --bg-color: #f5f7fa;
+      --text-color: #333;
+      --primary-color: #ff9800;
+      --header-bg: #00d4ff;
+      --sidebar-bg: #222;
+      --chat-user-bg: #00d4ff;
+      --chat-user-text: #fff;
+      --chat-bot-bg: #fff;
+      --chat-bot-text: #333;
+      --border-color: #ccc;
+    }
+    [data-theme="dark"] {
+      --bg-color: #121212;
+      --text-color: #f5f5f5;
+      --primary-color: #ff9800;
+      --header-bg: #1e1e1e;
+      --sidebar-bg: #111;
+      --chat-user-bg: #00d4ff;
+      --chat-user-text: #fff;
+      --chat-bot-bg: #1f1f1f;
+      --chat-bot-text: #f5f5f5;
+      --border-color: #333;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Poppins", Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      flex-direction: column;
+      background: var(--bg-color);
+      color: var(--text-color);
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: 260px;
+      background: var(--sidebar-bg);
+      color: white;
+      position: fixed;
+      top: 0;
+      left: -260px;
+      height: 100%;
+      transition: 0.3s;
+      padding-top: 60px;
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+    }
+    #sidebar a {
+      display: block;
+      padding: 12px;
+      color: white;
+      text-decoration: none;
+    }
+    #sidebar a:hover { background: var(--primary-color); }
+    #sidebar.active { left: 0; box-shadow: 2px 0 10px rgba(0,0,0,0.4); }
+
+    #overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      z-index: 1000;
+    }
+    #overlay.active { display: block; }
+
+    .hub-toggle {
+      cursor: pointer;
+      padding: 12px;
+      font-weight: bold;
+      background: #333;
+      border-top: 1px solid #444;
+    }
+    .hub-content {
+      display: none;
+      background: #2a2a2a;
+      border-top: 1px solid #444;
+    }
+    .hub-content a { padding-left: 24px; }
+
+    /* Header */
+    header {
+      position: fixed;
+      width: 100%;
+      top: 0;
+      left: 0;
+      background: var(--header-bg);
+      color: white;
+      padding: 12px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 999;
+    }
+    header .menu-btn { cursor: pointer; font-size: 22px; }
+    header h1 { margin: 5px 0; font-size: 18px; flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; }
+    header h1 img { width: 22px; height: 22px; margin-right: 8px; vertical-align: middle; }
+    .auth-links a { color: white; margin-left: 15px; text-decoration: none; }
+    #theme-toggle {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    /* Upgrade Button */
+    #upgrade-btn {
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary-color);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      z-index: 998;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    #upgrade-btn:hover { background: #e68900; }
+
+    /* Chat Layout */
+    #chat-container {
+      position: fixed;
+      top: 70px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    #chat-box {
+      flex: 1;
+      padding: 12px 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-color);
+      scroll-behavior: smooth;
+    }
+
+    /* Messages */
+    .msg {
+      max-width: 75%;
+      margin: 4px 0;
+      padding: 9px 12px;
+      border-radius: 10px;
+      line-height: 1.35;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      position: relative;
+    }
+    .user {
+      background: var(--chat-user-bg);
+      color: var(--chat-user-text);
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+    }
+    .bot {
+      background: var(--chat-bot-bg);
+      color: var(--chat-bot-text);
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Paragraph & List Spacing (tighter) */
+    .bot .bot-content p { margin: 3px 0; }
+    .bot .bot-content ul, .bot .bot-content ol { margin: 4px 0 4px 16px; }
+    .bot .bot-content li { margin: 2px 0; }
+
+    pre code {
+      display: block;
+      padding: 8px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 14px;
+      background: rgba(0,0,0,0.05);
+    }
+
+    .copy-btn {
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--primary-color);
+      opacity: 0.8;
+    }
+    .copy-btn:hover { color: #4caf50; opacity: 1; }
+
+    /* Chat Input */
+    #chat-form {
+      display: flex;
+      padding: 10px;
+      background: var(--chat-bot-bg);
+      border-top: 1px solid var(--border-color);
+    }
+    #message {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+    #chat-form button {
+      padding: 12px 15px;
+      margin-left: 8px;
+      background: var(--primary-color);
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #typing-bubble { font-style: italic; opacity: 0.7; }
+  </style>
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <a href="javascript:void(0)" onclick="toggleSidebar()">⬅ Back</a>
+    <a href="/chat">💬 Chat</a>
+
+    <div class="hub-toggle" onclick="toggleHub()">🌐 Hub ▼</div>
+    <div class="hub-content" id="hub">
+      <a href="/upgrade">⚡ Upgrade</a>
+      <a href="/analytics">📊 Analytics</a>
+      <a href="/logs">📜 Logs</a>
+      <a href="/tiers">📖 Tiers & Benefits</a>
+      <a href="/evostoken">🪙 EvosToken</a>
+      {% if tier in ["King", "Founder"] %}
+        <a href="/admin">🛠 Admin Dashboard</a>
+      {% endif %}
+      {% if not logged_in %}
+        <a href="/login">🔑 Login</a>
+        <a href="/register">📝 Register</a>
+      {% else %}
+        <a href="/logout">🚪 Logout</a>
+      {% endif %}
+    </div>
+
+    <div id="system-notices">
+      <h3>📢 System Notices</h3>
+      <div class="notice info">Loading notices...</div>
+    </div>
+  </div>
+  <div id="overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Header -->
+  <header>
+    <span class="menu-btn" onclick="toggleSidebar()">☰</span>
+    <h1>
+      <img src="{{ url_for('static', filename='images/evosgpt-icon.png') }}" alt="EVOSGPT Logo">
+      EVOSGPT {{ icon }} {{ tier }} Mode
+    </h1>
+    <div style="display:flex; align-items:center;">
+      <div class="auth-links">
+        {% if not logged_in %}
+          <a href="/login">🔑 Login</a>
+          <a href="/register">📝 Register</a>
+        {% else %}
+          <a href="/logout">🚪 Logout</a>
+        {% endif %}
+      </div>
+      <button id="theme-toggle">🌙</button>
+    </div>
+  </header>
+
+  {% if tier not in ["King", "Founder"] %}
+    <button id="upgrade-btn" onclick="location.href='/upgrade'">⚡ Upgrade Tier</button>
+  {% endif %}
+
+  <!-- Chat -->
+  <div id="chat-container">
+    <div id="chat-box"></div>
+    <form id="chat-form">
+      <input type="text" id="message" placeholder="Type your message..." autocomplete="off" required>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+<script>
+  function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("active");
+    document.getElementById("overlay").classList.toggle("active");
+  }
+  function toggleHub() {
+    const hub = document.getElementById("hub");
+    hub.style.display = hub.style.display === "block" ? "none" : "block";
+  }
+
+  const chatBox = document.getElementById("chat-box");
+  function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
+
+  const themeToggle = document.getElementById("theme-toggle");
+  themeToggle.addEventListener("click", () => {
+    const current = document.body.getAttribute("data-theme");
+    if (current === "dark") {
+      document.body.setAttribute("data-theme", "light");
+      themeToggle.textContent = "🌙";
+      localStorage.setItem("theme", "light");
+    } else {
+      document.body.setAttribute("data-theme", "dark");
+      themeToggle.textContent = "☀";
+      localStorage.setItem("theme", "dark");
+    }
+  });
+  const savedTheme = localStorage.getItem("theme");
+  document.body.setAttribute("data-theme", savedTheme || "light");
+  themeToggle.textContent = savedTheme === "dark" ? "☀" : "🌙";
+
+  document.getElementById("chat-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input = document.getElementById("message");
+    const text = input.value.trim();
+    if (!text) return;
+    chatBox.insertAdjacentHTML("beforeend", `<div class="msg user">${text}</div>`);
+    scrollToBottom();
+    input.value = "";
+
+    const typing = document.createElement("div");
+    typing.className = "msg bot";
+    typing.id = "typing-bubble";
+    typing.innerHTML = "EVOSGPT is typing...";
+    chatBox.appendChild(typing);
+    scrollToBottom();
+
+    try {
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text })
+      });
+      if (!res.ok) throw new Error("Network error " + res.status);
+      const data = await res.json();
+      typing.remove();
+
+      chatBox.insertAdjacentHTML("beforeend", `
+        <div class="msg bot">
+          <strong>EVOSGPT [${data.tier || "?"}]</strong><br>
+          <div class="bot-content">${marked.parse(data.reply)}</div>
+          <button class="copy-btn" onclick="copyText(this)">📋</button>
+        </div>
+      `);
+      scrollToBottom();
+    } catch (err) {
+      typing.remove();
+      chatBox.insertAdjacentHTML("beforeend", `<div class="msg bot error">⚠ Error: ${err.message}</div>`);
+    }
+  });
+
+  function copyText(button) {
+    const text = button.parentElement.innerText.replace("📋", "").trim();
+    navigator.clipboard.writeText(text).then(() => {
+      button.textContent = "✅";
+      setTimeout(() => button.textContent = "📋", 1500);
+    });
+  }
+
+  async function loadNotices() {
+    try {
+      const res = await fetch("/system_notices");
+      const data = await res.json();
+      const container = document.getElementById("system-notices");
+      container.innerHTML = "<h3>📢 System Notices</h3>";
+      if (data.length === 0) {
+        container.innerHTML += '<div class="notice info">No active notices.</div>';
+      } else {
+        data.forEach(note => {
+          container.innerHTML += `<div class="notice ${note.type}">${note.msg}</div>`;
+        });
+      }
+    } catch {}
+  }
+  loadNotices();
+  setInterval(loadNotices, 30000);
+</script>
+</body>
+</html>

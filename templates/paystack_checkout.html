@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting to Paystack...</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 50px;
+    }
+    .loader {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #3498db;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h2>Redirecting to Paystack... Please wait.</h2>
+  <div class="loader"></div>
+
+  <!-- ✅ Load Paystack script just before using it -->
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script>
+    // Debug
+    console.log("Paystack data:", {
+      key: "{{ key }}",
+      email: "{{ email }}",
+      amount: {{ amount }},
+      reference: "{{ reference }}",
+      metadata: {{ metadata | tojson | safe }}
+    });
+
+    // Setup Paystack
+    let handler = PaystackPop.setup({
+      key: "{{ key }}",
+      email: "{{ email }}",
+      amount: {{ amount }},
+      ref: "{{ reference }}",
+      metadata: {{ metadata | tojson | safe }},
+      callback: function(response) {
+        alert("✅ Payment successful! Ref: " + response.reference);
+        window.location.href = "/upgrade-success";
+      },
+      onClose: function() {
+        alert("⚠️ Payment window closed.");
+        window.location.href = "/upgrade";
+      }
+    });
+
+    handler.openIframe();
+  </script>
+</body>
+</html>

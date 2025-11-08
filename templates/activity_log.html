@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>👁 Activity Log - EVOSGPT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      background: #0d0d0d;
+      color: #00ffff;
+      font-family: "Courier New", monospace;
+      padding: 20px;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    h2 {
+      text-align: center;
+      color: #00e6e6;
+      margin-bottom: 15px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px auto;
+      background: #111;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #00ffff33;
+      text-align: left;
+    }
+    th {
+      background: #1a1a1a;
+      color: #00ffff;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+    tr:hover {
+      background: #222;
+    }
+    td {
+      color: #ddd;
+      font-size: 14px;
+    }
+    a {
+      color: #ff00ff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 15px;
+      color: #666;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <h2>👁 Activity Log (Last 50 Events)</h2>
+
+  <table>
+    <tr>
+      <th>User</th>
+      <th>Action</th>
+      <th>Details</th>
+      <th>Timestamp</th>
+    </tr>
+    {% for username, action, details, timestamp in logs %}
+    <tr>
+      <td>{{ username }}</td>
+      <td>{{ action }}</td>
+      <td>{{ details }}</td>
+      <td>{{ timestamp }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <div class="footer">
+    <a href="/">🔙 Return Home</a> | EVOSGPT © {{ year }}
+  </div>
+</body>
+</html>

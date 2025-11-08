@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🜲 Founder Coupon Admin</title>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #00ffff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h2 {
+            color: #ff00ff;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        p.notice {
+            color: orange;
+            text-align: center;
+            font-weight: bold;
+        }
+        form {
+            background: #111;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+        }
+        input, select {
+            padding: 8px;
+            margin-right: 5px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: none;
+        }
+        button {
+            padding: 8px 14px;
+            background: #00ffff;
+            border: none;
+            color: #101010;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #00bbbb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-family: monospace;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #00ffff;
+            text-align: center;
+        }
+        th {
+            background: #1a1a1a;
+        }
+        tr:nth-child(even) {
+            background: #151515;
+        }
+        a {
+            color: #ff00ff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .founder {
+            color: gold;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2>🜲 Founder Coupon Dashboard</h2>
+    <a href="{{ url_for('index') }}">← Back</a>
+
+    <p class="notice">⚠ Founder-only access. King users no longer manage coupons.</p>
+
+    <h3>Create New Coupon</h3>
+    <form method="POST">
+        <input name="code" placeholder="Coupon Code" required>
+        <select name="tier">
+            <option value="Core">Core</option>
+            <option value="Pro">Pro</option>
+            <option value="King">King</option>
+            <option value="Founder">🜲 Founder</option>
+        </select>
+        <button type="submit">Generate</button>
+    </form>
+
+    <h3>All Coupons</h3>
+    <table>
+        <tr>
+            <th>Code</th>
+            <th>Tier</th>
+            <th>Used</th>
+            <th>Action</th>
+        </tr>
+        {% for code, tier, used in coupons %}
+        <tr>
+            <td>{{ code }}</td>
+            <td>
+                {% if tier == "Founder" %}
+                    <span class="founder">🜲 Founder</span>
+                {% else %}
+                    {{ tier }}
+                {% endif %}
+            </td>
+            <td>{{ '✅' if used else '❌' }}</td>
+            <td>
+                <a href="{{ url_for('delete_coupon', code=code) }}" onclick="return confirm('Delete this coupon?')">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

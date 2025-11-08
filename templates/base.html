@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EVOSGPT WebCore</title>
+  <style>
+    /* ===== Global ===== */
+    :root {
+      --bg-main: #f5f5f5;
+      --bg-sidebar: #1a1a1a;
+      --text-main: #111;
+      --text-sidebar: #fff;
+      --accent: #00ffff;
+    }
+    [data-theme="dark"] {
+      --bg-main: #121212;
+      --bg-sidebar: #101010;
+      --text-main: #e0e0e0;
+      --text-sidebar: #00ffff;
+      --accent: #ff00ff;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      background: var(--bg-main);
+      color: var(--text-main);
+    }
+
+    /* ===== Sidebar ===== */
+    .sidebar {
+      width: 220px;
+      background: var(--bg-sidebar);
+      color: var(--text-sidebar);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.3s;
+    }
+    .sidebar h2 {
+      margin: 0 0 20px 0;
+    }
+    .sidebar a {
+      color: var(--text-sidebar);
+      text-decoration: none;
+      margin: 10px 0;
+      display: block;
+      padding: 6px 8px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .sidebar a:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .sidebar a.active {
+      background: var(--accent);
+      color: #000;
+      font-weight: bold;
+    }
+
+    /* ===== Main ===== */
+    .main {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      transition: background 0.3s, color 0.3s;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ===== Theme Toggle ===== */
+    .toggle-btn {
+      background: var(--accent);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #000;
+    }
+
+    /* ===== Mobile ===== */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 180px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>EVOSGPT</h2>
+    <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">💬 Chat</a>
+    <a href="{{ url_for('upgrade') }}" class="{% if request.endpoint == 'upgrade' %}active{% endif %}">⚡ Upgrade</a>
+    <a href="{{ url_for('activity_log') }}" class="{% if request.endpoint == 'activity_log' %}active{% endif %}">📜 Logs</a>
+    <a href="{{ url_for('analytics_dashboard') }}" class="{% if request.endpoint == 'analytics_dashboard' %}active{% endif %}">📊 Analytics</a>
+    <a href="{{ url_for('redeem') }}" class="{% if request.endpoint == 'redeem' %}active{% endif %}">🎟 Redeem</a>
+
+    {% if 'user_id' in session %}
+      <a href="{{ url_for('history') }}" class="{% if request.endpoint == 'history' %}active{% endif %}">💳 History</a>
+      <a href="{{ url_for('logout') }}">🚪 Logout</a>
+    {% else %}
+      <a href="{{ url_for('login') }}" class="{% if request.endpoint == 'login' %}active{% endif %}">🔑 Login</a>
+      <a href="{{ url_for('register') }}" class="{% if request.endpoint == 'register' %}active{% endif %}">📝 Register</a>
+    {% endif %}
+  </div>
+
+  <!-- Main content -->
+  <div class="main">
+    <div class="header">
+      <h1>EVOSGPT</h1>
+      <button class="toggle-btn" onclick="toggleTheme()">🌗 Theme</button>
+    </div>
+    <hr>
+    {% block content %}{% endblock %}
+  </div>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="flashes">
+      {% for msg in messages %}
+        <li>{{ msg }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+  <script>
+    function toggleTheme() {
+      const body = document.body;
+      const current = body.getAttribute("data-theme");
+      body.setAttribute("data-theme", current === "light" ? "dark" : "light");
+    }
+  </script>
+</body>
+</html>

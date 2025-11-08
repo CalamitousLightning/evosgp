@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  h2 {
+    color: #ff00ff;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  form {
+    background: #111;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    margin-bottom: 25px;
+  }
+  textarea {
+    width: 100%;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px;
+    font-family: monospace;
+    resize: vertical;
+  }
+  button {
+    background: #00ffff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 15px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    color: #000;
+    transition: 0.2s;
+  }
+  button:hover {
+    background: #00cccc;
+  }
+  h3 {
+    margin-top: 30px;
+    color: #00ffff;
+  }
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  li {
+    background: #181818;
+    border-left: 3px solid #00ffff;
+    margin: 8px 0;
+    padding: 10px;
+    border-radius: 6px;
+    font-family: monospace;
+  }
+  li b {
+    color: #ff00ff;
+    margin-right: 5px;
+  }
+</style>
+
+<h2>🛡 System Messages (Admin Only)</h2>
+
+<form method="POST">
+    <textarea name="message" placeholder="Enter system message" rows="3"></textarea><br>
+    <button type="submit">Add System Message</button>
+</form>
+
+<hr>
+<h3>Recent System Messages</h3>
+<ul>
+{% for mid, msg, ts in system_messages %}
+    <li><b>[{{ ts }}]</b> {{ msg }}</li>
+{% else %}
+    <li>No system messages yet.</li>
+{% endfor %}
+</ul>
+{% endblock %}

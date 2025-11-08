@@ -1,0 +1,160 @@
+# ---------- CHAT ROUTE (EV-Main + Safe Long & Global Memory) ----------
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.get_json(silent=True) or {}
+    user_msg = (data.get("message") or "").strip()
+    ui = user_msg.lower()
+    tier = session.get("tier", "Basic")
+    reply = None
+    guest_id = None
+
+    # --- Guest mode ---
+    if "user_id" not in session:
+        if "guest_id" not in session:
+            token = os.urandom(16).hex()
+            conn = sqlite3.connect("database/memory.db")
+            c = conn.cursor()
+            c.execute("INSERT INTO guests (session_token) VALUES (?)", (token,))
+            guest_id = c.lastrowid
+            conn.commit()
+            conn.close()
+            session["guest_id"] = guest_id
+            session["guest_count"] = 0
+        else:
+            guest_id = session["guest_id"]
+
+        guest_count = session.get("guest_count", 0)
+        if guest_count >= 5:
+            return jsonify({"reply": "🚪 Guest mode limit reached.", "redirect": "/register"})
+        session["guest_count"] = guest_count + 1
+        if session["guest_count"] == 4:
+            return jsonify({"reply": "⚠ You have 1 free chat left. Please register or log in to continue."})
+
+    # --- Founder unlock sequence ---
+    if "user_id" in session:
+        seq = session.get("founder_seq", 0)
+        if seq == 0 and ui == "evosgpt where you created":
+            reply = "lab"; session["founder_seq"] = 1
+        elif seq == 1 and ui == "ghanaherewecome":
+            reply = "are you coming to Ghana?"; session["founder_seq"] = 2
+        elif seq == 2 and ui == "nameless":
+            reply = "[SYSTEM] Founder tier unlocked. Welcome, hidden user."
+            session.update({"founder_seq": 0, "tier": "Founder"})
+            try:
+                conn = sqlite3.connect("database/memory.db")
+                c = conn.cursor()
+                c.execute("UPDATE users SET tier=? WHERE id=?", ("Founder", session["user_id"]))
+                conn.commit(); conn.close()
+            except Exception as e:
+                log_suspicious("FounderUnlockFail", str(e))
+        elif tier == "Founder" and ui == "logout evosgpt":
+            reply = "[SYSTEM] Founder mode deactivated. Returning to Basic tier."
+            session["tier"] = "Basic"
+            try:
+                conn = sqlite3.connect("database/memory.db")
+                c = conn.cursor()
+                c.execute("UPDATE users SET tier=? WHERE id=?", ("Basic", session["user_id"]))
+                conn.commit(); conn.close()
+            except Exception as e:
+                log_suspicious("FounderLogoutFail", str(e))
+        elif seq > 0:
+            session["founder_seq"] = 0
+
+    # --- Memory Recall ---
+    long_summary, global_context = "", ""
+    try:
+        conn = sqlite3.connect("database/memory.db")
+        c = conn.cursor()
+        if "user_id" in session:
+            c.execute("SELECT summary FROM long_memory WHERE user_id=? LIMIT 1", (session["user_id"],))
+            r = c.fetchone()
+            if r and r[0]:
+                long_summary = r[0]
+        c.execute("SELECT content FROM global_memory ORDER BY importance DESC, timestamp DESC LIMIT 2")
+        rows = c.fetchall()
+        if rows:
+            global_context = "\n".join([r[0] for r in rows])
+        conn.close()
+    except Exception as e:
+        log_suspicious("MemoryRecallFail", str(e))
+
+    # --- AI Router ---
+    if reply is None:
+        try:
+            memory_prefix = ""
+            if long_summary:
+                memory_prefix += f"[User Summary Memory]: {long_summary}\n"
+            if global_context:
+                memory_prefix += f"[Global Memory]: {global_context}\n"
+            prompt = f"{memory_prefix}{user_msg}"
+            raw_reply = route_ai_call(tier, prompt)
+            reply = auto_paragraph(raw_reply)
+        except Exception as e:
+            log_suspicious("LLMError", str(e))
+            reply = f"⚠️ System Error\n> {user_msg}"
+
+    # --- Save chat (local first) ---
+    try:
+        conn = sqlite3.connect("database/memory.db")
+        c = conn.cursor()
+        if "user_id" in session:
+            uid = session["user_id"]
+            c.execute("INSERT INTO memory (user_id, user_input, bot_response, system_msg) VALUES (?, ?, ?, 0)",
+                      (uid, user_msg, reply))
+            conn.commit()
+            enforce_memory_limit(uid, tier)
+        elif guest_id:
+            c.execute("INSERT INTO memory (guest_id, user_input, bot_response, system_msg) VALUES (?, ?, ?, 0)",
+                      (guest_id, user_msg, reply))
+            conn.commit()
+        conn.close()
+    except Exception as e:
+        log_suspicious("ChatInsertFail", str(e))
+
+    # --- Mirror to Supabase (non-blocking, silent) ---
+    if DB_MODE in ("supabase", "postgres") and SUPABASE_URL and SUPABASE_KEY:
+        try:
+            headers = {
+                "apikey": SUPABASE_KEY,
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal"
+            }
+            payload = {
+                "user_id": session.get("user_id"),
+                "guest_id": guest_id,
+                "user_input": user_msg,
+                "bot_response": reply,
+                "system_msg": 0
+            }
+            res = requests.post(f"{SUPABASE_URL}/rest/v1/memory", headers=headers, json=payload)
+            if not res.ok:
+                log_suspicious("SupabaseMirrorFail", f"{res.status_code}: {res.text[:100]}")
+        except Exception as e:
+            log_suspicious("SupabaseMirrorError", str(e))
+
+    # --- Auto Summarize into long_memory ---
+    try:
+        if "user_id" in session:
+            uid = session["user_id"]
+            conn = sqlite3.connect("database/memory.db")
+            c = conn.cursor()
+            c.execute("SELECT COUNT(*) FROM memory WHERE user_id=?", (uid,))
+            count = c.fetchone()[0]
+            if count % 10 == 0 and count > 0:
+                c.execute("SELECT user_input, bot_response FROM memory WHERE user_id=? ORDER BY id DESC LIMIT 20", (uid,))
+                rows = c.fetchall()
+                convo = "\n".join([f"User: {u}\nAI: {b}" for u, b in rows])
+                summary_prompt = f"Summarize this conversation in 1-2 sentences:\n{convo}"
+                summary = route_ai_call("System", summary_prompt)
+                c.execute("""
+                    INSERT INTO long_memory (user_id, summary, last_updated)
+                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(user_id) DO UPDATE SET summary=excluded.summary, last_updated=CURRENT_TIMESTAMP;
+                """, (uid, summary))
+                conn.commit()
+            conn.close()
+    except Exception as e:
+        log_suspicious("LongMemoryUpdateFail", str(e))
+
+    return jsonify({"reply": reply.replace("\\n", "\n"), "tier": tier})

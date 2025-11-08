@@ -564,6 +564,9 @@ def process_chat_job(job_id, user_id, tier, user_msg):
         jobs[job_id] = {"status": "done", "reply": reply}
 
 
+import os, json, requests
+from typing import Optional
+
 # ---------- SYSTEM PROMPTS ----------
 def build_system_prompt(tier: str) -> str:
     """
@@ -712,6 +715,66 @@ def gpt5(prompt: str, system_prompt: str = "") -> str:
         or f"[5Echo] {prompt}"
 
 
+# ---------- IMAGE DETECTION + GENERATION ----------
+def is_image_request(prompt: str) -> bool:
+    """
+    Detect if a user is asking for an image.
+    """
+    keywords = [
+        "draw", "show me", "illustrate", "generate image",
+        "make an image", "create picture", "design", "render",
+        "visualize", "generate photo", "generate art"
+    ]
+    return any(k in prompt.lower() for k in keywords)
+
+
+def generate_image(prompt: str, tier: str = "Basic") -> str:
+    """
+    Generate an image using OpenAI's image model.
+    Returns a URL or friendly message.
+    """
+
+    size_map = {
+        "Basic": "512x512",
+        "Core": "768x768",
+        "Pro": "1024x1024",
+        "King": "1024x1024",
+        "Founder": "1792x1024"
+    }
+    img_size = size_map.get(tier, "512x512")
+
+    try:
+        if not OPENAI_API_KEY:
+            return "⚠️ Image generation unavailable — API key missing."
+
+        headers = {
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        data = {
+            "model": "gpt-image-1",
+            "prompt": prompt,
+            "size": img_size,
+        }
+
+        resp = requests.post("https://api.openai.com/v1/images/generations",
+                             headers=headers, json=data, timeout=30)
+
+        if resp.status_code == 200:
+            result = resp.json()["data"][0]
+            img_url = result.get("url", None)
+            if img_url:
+                return f"🖼️ **Image generated successfully!**\n\n[{prompt}]({img_url})\n\nPreview:\n{img_url}"
+            else:
+                return "⚠️ Image generation succeeded, but no URL returned."
+        else:
+            return f"⚠️ Image generation failed: {resp.text[:200]}"
+    except Exception as e:
+        log_suspicious("ImageGenError", str(e))
+        return f"⚠️ Image generation error: {str(e)}"
+
+
 # ---------- ROUTER ----------
 def route_ai_call(tier: str, prompt: str) -> str:
     """
@@ -719,6 +782,11 @@ def route_ai_call(tier: str, prompt: str) -> str:
     Prioritizes best model chain for each user level.
     """
     tier = tier.capitalize().strip()
+
+    # 🧠 NEW: image detection
+    if is_image_request(prompt):
+        return generate_image(prompt, tier)
+
     system_msg = build_system_prompt(tier)
 
     def _try_chain(options):
@@ -736,7 +804,7 @@ def route_ai_call(tier: str, prompt: str) -> str:
         print(f"[DEBUG] {tier} → all models failed")
         return f"⚠️ System temporarily unreachable.\n\n> {prompt}"
 
-    # BASIC — gpt-4o-mini priority, low-cost
+    # BASIC — gpt-4o-mini priority
     if tier == "Basic":
         return _try_chain([
             ("GPT-4o-mini", gpt4o_mini),
@@ -744,7 +812,7 @@ def route_ai_call(tier: str, prompt: str) -> str:
             ("OpenRouter", _openrouter_chat)
         ])
 
-    # CORE — 4o-mini and 3.5 hybrid
+    # CORE — hybrid balance
     if tier == "Core":
         return _try_chain([
             ("GPT-4o-mini", gpt4o_mini),
@@ -752,7 +820,7 @@ def route_ai_call(tier: str, prompt: str) -> str:
             ("OpenRouter", _openrouter_chat)
         ])
 
-    # PRO — gpt-4o first, deep reasoning
+    # PRO — deeper reasoning
     if tier == "Pro":
         return _try_chain([
             ("GPT-4o", gpt4o),
@@ -761,7 +829,7 @@ def route_ai_call(tier: str, prompt: str) -> str:
             ("OpenRouter", _openrouter_chat)
         ])
 
-    # KING — gpt-5 with fallback
+    # KING — gpt-5 priority
     if tier == "King":
         return _try_chain([
             ("GPT-5", gpt5),
@@ -770,7 +838,7 @@ def route_ai_call(tier: str, prompt: str) -> str:
             ("Local", local_llm)
         ])
 
-    # FOUNDER — full access chain
+    # FOUNDER — full chain
     if tier == "Founder":
         return _try_chain([
             ("GPT-5", gpt5),
@@ -781,6 +849,7 @@ def route_ai_call(tier: str, prompt: str) -> str:
         ])
 
     return f"(Unknown tier: {tier}) {prompt}"
+
 
 
 
@@ -2215,6 +2284,7 @@ if __name__ == "__main__":
     init_db()
     # Do not run in debug on production. Use env var PORT or default 5000.
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=True)
+
 
 
 
